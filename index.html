@@ -1,0 +1,353 @@
+<!DOCTYPE html> 
+<html lang="en">
+   <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+      <title>🌧️ The Petrichor Selector</title>
+      <!-- Fantasy font -->
+      <!-- Risk of Rain 2 Theme -->
+      <!-- Risk of Rain 2 Dark Blue Theme -->
+      <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
+      <style>
+         body {
+         font-family: 'Orbitron', sans-serif;
+         background: #05050a url('https://www.transparenttextures.com/patterns/dark-mosaic.png') repeat;
+         color: #c0f0ff;
+         text-align: center;
+         padding: 60px 20px;
+         transition: background-color 0.5s ease;
+         }
+         h1 {
+         font-family: 'Orbitron', sans-serif;
+         font-size: 48px;
+         margin-bottom: 10px;
+         color: #00ffff; /* neon cyan */
+         text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff, 0 0 30px #00ffff;
+         }
+         h2 {
+         font-size: 20px;
+         color: #88dfff;
+         margin-bottom: 40px;
+         font-style: italic;
+         }
+         button {
+         padding: 12px 24px;
+         font-size: 18px;
+         cursor: pointer;
+         border: none;
+         background: linear-gradient(135deg, #0066ff, #00ffff);
+         color: #05050a;
+         border-radius: 8px;
+         box-shadow: 0 0 10px #0066ff, 0 0 20px #00ffff;
+         transition: transform 0.2s ease, box-shadow 0.2s ease;
+         }
+         button:hover {
+         transform: scale(1.05);
+         box-shadow: 0 0 20px #0066ff, 0 0 40px #00ffff;
+         }
+         .result {
+         margin-top: 40px;
+         font-size: 22px;
+         background-color: #0a0a1a;
+         padding: 20px;
+         border-radius: 10px;
+         display: inline-block;
+         box-shadow: 0 0 15px #0066ff, 0 0 30px #00ffff;
+         transition: background-color 0.5s ease, box-shadow 0.5s ease;
+         }
+         .result span {
+         display: block;
+         margin-top: 12px;
+         }
+         select {
+         padding:10px;
+         font-size:16px;
+         border-radius:6px;
+         border:none;
+         box-shadow: 0 0 5px #0066ff, 0 0 10px #00ffff;
+         background-color: #0a0a1a;
+         color: #c0f0ff;
+         }
+         @media (max-width: 600px) {
+         body { padding: 30px 10px; }
+         h1 { font-size: 36px; }
+         .result { font-size: 18px; padding: 15px; }
+         button { font-size: 16px; padding: 10px 20px; }
+         }
+      </style>
+   </head>
+   <body>
+      <h1>The Petrichor Selector</h1>
+      <h2>A Risk of Rain 2 Survivor Randomizer</h2>
+      <br>
+      <button onclick="rollSurvivor()">🎲 Roll a Random Survivor!</button>
+      <br>  
+      <div class="survivor-image-container" style="margin-top: 20px;">
+         <img id="survivorImage" src="" alt="" style="width:200px; height:auto; border-radius:10px; box-shadow:0 0 10px #00ffff;" />
+      </div>
+      <div class="result" id="result"></div>
+      <!-- Dropdown to manually select a survivor -->
+      <div style="margin-top: 20px;">
+         <br>  
+         <select id="survivorSelect" style="padding:10px; font-size:16px; border-radius:6px; border:none; box-shadow:0 2px 4px rgba(0,0,0,0.3);">
+            <option value="" disabled selected>Select a Survivor</option>
+         </select>
+         <button onclick="rollSelectedSurvivor()" style="margin-left: 10px;">🎲 Re-Roll Skills Only</button>
+      </div>
+      <audio id="rollSound" src="https://cdn.pixabay.com/audio/2022/03/24/audio_3c05fb9e91.mp3" preload="auto"></audio>
+      <script>
+         const survivors = {
+				  "Acrid": {
+					image: "https://static.wikia.nocookie.net/riskofrain2_gamepedia_en/images/8/8e/Acrid.png/revision/latest?cb=20200129235326",
+					primary: ["Vicious Wounds"],
+					secondary: ["Neurotoxin", "Ravenous Bite"],
+					utility: ["Caustic Leap", "Frenzied Leap"],
+					special: ["Epidemic"],
+					misc: ["Poison", "Blight"]
+				  },
+				  "Artificer": {
+					image: "https://static.wikia.nocookie.net/riskofrain2_gamepedia_en/images/9/98/Artificer.png/revision/latest/scale-to-width-down/128?cb=20200129200643",
+					primary: ["Flame Bolt", "Plasma Bolt"],
+					secondary: ["Charged Nano-Bomb", "Cast Nano-Spear"],
+					utility: ["Snapfreeze"],
+					special: ["Flamethrower", "Ion Surge"],
+					misc: ["ENV Suit"]
+				  },
+				  "Bandit": {
+					image: "https://static.wikia.nocookie.net/riskofrain2_gamepedia_en/images/1/1f/Bandit.png/revision/latest?cb=20210326045945",
+					primary: ["Burst", "Blast"],
+					secondary: ["Serrated Dagger", "Serrated Shiv"],
+					utility: ["Smoke Bomb"],
+					special: ["Lights Out", "Desperado"],
+					misc: ["Backstab"]
+				  },
+
+				  // Additional survivors
+				  "CHEF": {
+					image: "https://static.wikia.nocookie.net/riskofrain2_gamepedia_en/images/5/51/CHEF.png/revision/latest?cb=20240828191631",
+					primary: ["Dice", "Boosted Dice"],
+					secondary: ["Sear", "Boosted Sear", "Ice Box", "Boosted Ice Box"],
+					utility: ["Roll", "Boosted Roll", "Oil Spill"],
+					special: ["Glaze", "Yes, CHEF!"],
+					misc: ["CHEF's Kiss"]
+				  },
+				  "Captain": {
+					image: "https://static.wikia.nocookie.net/riskofrain2_gamepedia_en/images/a/a9/Captain.png/revision/latest?cb=20200811155443",
+					primary: ["Vulcan Shotgun"],
+					secondary: ["Power Tazer"],
+					utility: ["Orbital Probe", "OGM-72 'DIABLO' Strike"],
+					special: ["Orbital Supply Beacon", "Beacon: Healing", "Beacon: Shocking", "Beacon: Resupply", "Beacon: Hacking"],
+					misc: ["Defensive Microbots"]
+				  },
+				  "Commando": {
+					image: "https://static.wikia.nocookie.net/riskofrain2_gamepedia_en/images/5/50/Commando.png/revision/latest?cb=20200129200647",
+					primary: ["Double Tap"],
+					secondary: ["Phase Round", "Phase Blast"],
+					utility: ["Tactical Dive", "Tactical Slide"],
+					special: ["Suppressive Fire", "Frag Grenade"],
+					misc: ["n/a"]
+				  },
+				  "Drifter": {
+					image: "https://static.wikia.nocookie.net/riskofrain2_gamepedia_en/images/8/89/Drifter.png/revision/latest?cb=20251123012142",
+					primary: ["Blunt Force"],
+					secondary: ["Cleanup", "Junk Cube"],
+					utility: ["Repossess", "Bludgeon", "Discard", "Tornado Slam"],
+					special: ["Salvage", "Tinker"],
+					misc: ["Trash to Treasure"]
+				  },
+				  "Engineer": {
+					image: "https://static.wikia.nocookie.net/riskofrain2_gamepedia_en/images/d/d8/Engineer.png/revision/latest?cb=20200129200649",
+					primary: ["Bouncing Grenades"],
+					secondary: ["Pressure Mines", "Spider Mines"],
+					utility: ["Bubble Shield", "Thermal Harpoons"],
+					special: ["TR12 Gauss Auto-Turret", "TR58 Carbonizer Turret"],
+					misc: ["n/a"]
+				  },
+				  "False Son": {
+					image: "https://static.wikia.nocookie.net/riskofrain2_gamepedia_en/images/9/93/False_Son.png/revision/latest?cb=20240828191857",
+					primary: ["Club of the Forsaken", "Club Slam"],
+					secondary: ["Lunar Spikes", "Lunar Stakes"],
+					utility: ["Step of the Brothers", "Meridian's Will"],
+					special: ["Laser of the Father", "Laser Burst"],
+					misc: ["Lunar Tampering"]
+				  },
+				  "Heretic": {
+					image: "https://static.wikia.nocookie.net/riskofrain2_gamepedia_en/images/8/81/Heretic.png/revision/latest?cb=20210326043605",
+					primary: ["Hungering Gaze"],
+					secondary: ["Slicing Maelstrom"],
+					utility: ["Shadowfade"],
+					special: ["Ruin"],
+					misc: ["Nevermore"]
+				  },
+				  "Huntress": {
+					image: "https://static.wikia.nocookie.net/riskofrain2_gamepedia_en/images/6/6f/Huntress.png/revision/latest?cb=20200129200650",
+					primary: ["Strafe", "Flurry"],
+					secondary: ["Laser Glaive"],
+					utility: ["Blink", "Phase Blink"],
+					special: ["Arrow Rain", "Ballista"],
+					misc: ["n/a"]
+				  },
+				  "Loader": {
+					image: "https://static.wikia.nocookie.net/riskofrain2_gamepedia_en/images/2/25/Loader.png/revision/latest?cb=20200129235338",
+					primary: ["Knuckleboom"],
+					secondary: ["Grapple Fist", "Spiked Fist"],
+					utility: ["Charged Gauntlet", "Thunder Gauntlet"],
+					special: ["M551 Pylon", "Thunderslam"],
+					misc: ["Scrap Barrier"]
+				  },
+				  "MUL-T": {
+					image: "https://static.wikia.nocookie.net/riskofrain2_gamepedia_en/images/6/6f/MUL-T.png/revision/latest?cb=20200129200652",
+					primary: ["Auto-Nailgun", "Rebar Puncher", "Scrap Launcher", "Power-Saw"],
+					secondary: ["Blast Canister"],
+					utility: ["Transport Mode"],
+					special: ["Retool", "Power Mode"],
+					misc: ["n/a"]
+				  },
+				  "Mercenary": {
+					image: "https://static.wikia.nocookie.net/riskofrain2_gamepedia_en/images/0/00/Mercenary.png/revision/latest?cb=20200129200651",
+					primary: ["Laser Sword"],
+					secondary: ["Whirlwind", "Rising Thunder"],
+					utility: ["Blinding Assault", "Focused Assault"],
+					special: ["Eviscerate", "Slicing Winds"],
+					misc: ["Cybernetic Enhancements"]
+				  },
+				  "Operator": {
+					image: "https://static.wikia.nocookie.net/riskofrain2_gamepedia_en/images/1/17/Operator.png/revision/latest?cb=20251123012157",
+					primary: ["H3-11 OCR Custom"],
+					secondary: ["ADMIN-OVERRIDE", "CMD-SWARM"],
+					utility: ["Ascent Protocol", "FIREWALL"],
+					special: ["Ejection Core", "Amp Core"],
+					misc: ["Drone Tech", "Gunner Drone Mk 2", "Healing Drone Mk 2", "Transport Drone Mk 2"]
+				  },
+				  "REX": {
+					image: "https://static.wikia.nocookie.net/riskofrain2_gamepedia_en/images/7/74/REX.png/revision/latest?cb=20200129200652",
+					primary: ["DIRECTIVE: Inject"],
+					secondary: ["DIRECTIVE: Drill", "Seed Barrage"],
+					utility: ["DIRECTIVE: Disperse", "Bramble Volley"],
+					special: ["DIRECTIVE: Harvest", "Tangling Growth"],
+					misc: ["Natural Toxins"]
+				  },
+				  "Railgunner": {
+					image: "https://static.wikia.nocookie.net/riskofrain2_gamepedia_en/images/f/fe/Railgunner.png/revision/latest?cb=20220302014737",
+					primary: ["XQR Smart Round System"],
+					secondary: ["M99 Sniper", "M99", "Active Reload", "HH44 Marksman", "HH44"],
+					utility: ["Concussion Device", "Polar Field Device"],
+					special: ["Supercharge", "Supercharged Railgun", "Cryocharge", "Cryocharged Railgun"],
+					misc: ["Magnetic Accelerator"]
+				  },
+				  "Seeker": {
+					image: "https://static.wikia.nocookie.net/riskofrain2_gamepedia_en/images/5/54/Seeker.png/revision/latest?cb=20240828191746",
+					primary: ["Spirit Punch"],
+					secondary: ["Unseen Hand", "Soul Spiral"],
+					utility: ["Sojourn", "Reprieve"],
+					special: ["Meditate", "Palm Blast"],
+					misc: ["Inner Strength"]
+				  },
+				  "Void Fiend": {
+					image: "https://static.wikia.nocookie.net/riskofrain2_gamepedia_en/images/5/5b/Void_Fiend.png/revision/latest?cb=20220302014710",
+					primary: ["Drown", "Corrupted Drown"],
+					secondary: ["Flood", "Corrupted Flood"],
+					utility: ["Trespass", "Corrupted Trespass"],
+					special: ["Suppress", "Corrupted Suppress"],
+					misc: ["Void Corruption"]
+				  }
+				};
+         
+             function getRandom(arr) {
+               return arr[Math.floor(Math.random() * arr.length)];
+             }
+         
+             function rollSurvivor() {
+               const audio = document.getElementById("rollSound");
+               audio.currentTime = 0;
+               audio.play().catch(() => {});
+         
+               const survivorNames = Object.keys(survivors);
+               const randomSurvivor = getRandom(survivorNames);
+         
+               displayRoll(randomSurvivor);
+             }
+         
+             function rollSelectedSurvivor() {
+               const selectedSurvivor = document.getElementById("survivorSelect").value;
+               if (!selectedSurvivor) return alert("Please select a survivor first!");
+         
+               displayRoll(selectedSurvivor);
+             }
+         
+         function displayRoll(survivor) {
+           const audio = document.getElementById("rollSound");
+           audio.currentTime = 0;
+           audio.play().catch(() => {});
+         
+           const primary = getRandom(survivors[survivor].primary);
+           const secondary = getRandom(survivors[survivor].secondary);
+           const utility = getRandom(survivors[survivor].utility);
+           const special = getRandom(survivors[survivor].special);
+		   const misc = getRandom(survivors[survivor].misc);
+         
+           // Update the result panel
+           document.getElementById("result").innerHTML = `
+             <span><strong>${survivor}</strong></span>
+             <span>🗡 Primary: <strong>${primary}</strong></span>
+             <span>🛡 Secondary: <strong>${secondary}</strong></span>
+             <span>⚡ Utility: <strong>${utility}</strong></span>
+             <span>💥 Special: <strong>${special}</strong></span>
+			 <span>🌧️ Misc: <strong>${misc}</strong></span>
+           `;
+         
+           // Update the survivor image
+           const img = document.getElementById("survivorImage");
+           img.src = survivors[survivor].image;
+           img.alt = survivor;
+         
+           // **Automatically select the survivor in the dropdown**
+           const dropdown = document.getElementById("survivorSelect");
+           dropdown.value = survivor;
+         
+           logRoll(survivor, primary, secondary, utility, special, misc);
+         }
+         
+             function logRoll(survivor, primary, secondary, utility, special, misc) {
+               const now = new Date();
+               const timestamp =
+                 now.toLocaleTimeString('en-GB', { hour12: false }) +
+                 '.' +
+                 String(now.getMilliseconds()).padStart(3, '0');
+         
+               const logEntry = document.createElement("li");
+               logEntry.innerHTML = `
+                 [${timestamp}] <strong>${survivor}</strong> |
+                 🗡 ${primary} |
+                 🛡 ${secondary} |
+                 ⚡ ${utility} |
+                 💥 ${special} |
+				 🌧️ ${misc}
+               `;
+               document.getElementById("logList").prepend(logEntry);
+             }
+         
+             // Populate the survivor dropdown on load
+             window.onload = () => {
+               const survivorSelect = document.getElementById("survivorSelect");
+               Object.keys(survivors).forEach(survivor => {
+                 const option = document.createElement("option");
+                 option.value = survivor;
+                 option.textContent = survivor;
+                 survivorSelect.appendChild(option);
+               });
+         
+               rollSurvivor(); // Auto-roll on load
+             };
+           
+      </script>
+      <div id="log" style="margin-top: 60px; text-align: left; max-width: 1200px; margin-left: auto; margin-right: auto; font-size: 14px; background-color: #2c2c2c; padding: 15px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.3); overflow-y: auto; max-height: 300px;">
+         <strong>Roll Log:</strong>
+         <ul id="logList" style="list-style-type: none; padding-left: 0;"></ul>
+      </div>
+      <br>
+      <footer style="text-align:center; padding:1em 0; background:#B26840;">
+         <a href="https://discord.gg/TYB9vghZ28" target="_blank">🐀 Join "The Rat Slappers" Discord Community</a>
+      </footer>
+   </body>
+</html>
